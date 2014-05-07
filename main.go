@@ -266,9 +266,9 @@ func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <style type="text/css">
 a { color: #003fff; }
-td, th { white-space: nowrap; }
-.modified { text-align: center; width: 17em; }
-.size { width: 6em; }
+td, th { white-space: nowrap; padding: 4px 5px !important; }
+.modified { text-align: center; width: 16em; }
+.size { width: 7em; }
 th.size { text-align: center; }
 td.size { text-align: right; }
 .type { width: 15em; }
