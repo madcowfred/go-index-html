@@ -167,18 +167,6 @@ func marshal(v interface{}) string {
 	return string(b)
 }
 
-func isMP3(filename string) bool {
-	ext := path.Ext(filename)
-	mt := mime.TypeByExtension(ext)
-	if mt != "audio/mpeg" {
-		return false
-	}
-	if ext != ".mp3" {
-		return false
-	}
-	return true
-}
-
 func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
 	// Build index.html
 	relPath := removeIfStartsWith(u.Path, proxyRoot)
@@ -253,19 +241,6 @@ func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
 		return
 	}
 
-	// Check if there are MP3s in this directory:
-	hasMP3s := false
-	if useJPlayer {
-		for _, dfi := range fis {
-			dfi = followSymlink(localPath, dfi)
-			if !isMP3(dfi.Name()) {
-				continue
-			}
-			hasMP3s = true
-			break
-		}
-	}
-
 	// Sort the entries by the desired mode:
 	switch sortBy {
 	default:
@@ -304,128 +279,12 @@ td.s, th.s {white-space: nowrap; text-align: right;}
 div.list { background-color: white; border-top: 1px solid #646464; border-bottom: 1px solid #646464; padding-top: 10px; padding-bottom: 14px;}
 div.foot { font: 90%% monospace; color: #787878; padding-top: 4px;}
   </style>
+</head>
+<body>
 `, pathHtml)
 
-	if hasMP3s {
-		fmt.Fprintf(rsp, `
-  <link href="%[1]s/jplayer.blue.monday.css" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-  <script type="text/javascript" src="%[1]s/jquery.jplayer.min.js"></script>
-  <script type="text/javascript" src="%[1]s/jplayer.playlist.min.js"></script>
-  <script type="text/javascript">
-    $(function() {
-      new jPlayerPlaylist({ jPlayer: "#jplayer" }, [
-`, jplayerUrl)
-
-		// Generate jPlayer playlist:
-		first := true
-		for _, dfi := range fis {
-			name := dfi.Name()
-			if name[0] == '.' {
-				continue
-			}
-
-			dfi = followSymlink(localPath, dfi)
-
-			dfiPath := path.Join(localPath, name)
-			href := translateForProxy(dfiPath)
-
-			if dfi.IsDir() {
-				continue
-			}
-
-			if !isMP3(name) {
-				continue
-			}
-
-			if !first {
-				fmt.Fprintf(rsp, ", ")
-			} else {
-				fmt.Fprintf(rsp, "  ")
-			}
-
-			ext := path.Ext(name)
-			onlyname := name
-			if ext != "" {
-				onlyname = name[0 : len(name)-len(ext)]
-			}
-
-			fmt.Fprintf(rsp, "{ title: %s, mp3: %s }\n",
-				marshal(onlyname),
-				marshal(href),
-			)
-			first = false
-		}
-
-		// End playlist:
-		fmt.Fprintf(rsp, `
-      ], {
-        swfPath: "/js",
-		supplied: "mp3",
-		wmode: "window"
-      });
-
-	});
-  </script>
-`)
-	}
-
 	fmt.Fprintf(rsp, `
-</head>`)
-
-	fmt.Fprintf(rsp, `
-<body>
   <h2>Index of %s</h2>`, pathHtml)
-
-	if hasMP3s {
-		fmt.Fprintf(rsp, `
-  <div id="jplayer" class="jp-jplayer"></div>
-
-  <div id="jp_container_1" class="jp-audio" style="float: left; margin-right:12px;">
-    <div class="jp-type-playlist">
-        <div class="jp-gui jp-interface">
-            <ul class="jp-controls">
-                <li><a href="javascript:;" class="jp-previous" tabindex="1">previous</a></li>
-                <li><a href="javascript:;" class="jp-play" tabindex="1">play</a></li>
-                <li><a href="javascript:;" class="jp-pause" tabindex="1">pause</a></li>
-                <li><a href="javascript:;" class="jp-next" tabindex="1">next</a></li>
-                <li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
-                <li><a href="javascript:;" class="jp-mute" tabindex="1" title="mute">mute</a></li>
-                <li><a href="javascript:;" class="jp-unmute" tabindex="1" title="unmute">unmute</a></li>
-                <li><a href="javascript:;" class="jp-volume-max" tabindex="1" title="max volume">max volume</a></li>
-            </ul>
-            <div class="jp-progress">
-                <div class="jp-seek-bar">
-                    <div class="jp-play-bar"></div>
-                </div>
-            </div>
-            <div class="jp-volume-bar">
-                <div class="jp-volume-bar-value"></div>
-            </div>
-            <div class="jp-time-holder">
-                <div class="jp-current-time"></div>
-                <div class="jp-duration"></div>
-            </div>
-            <ul class="jp-toggles">
-                <li><a href="javascript:;" class="jp-shuffle" tabindex="1" title="shuffle">shuffle</a></li>
-                <li><a href="javascript:;" class="jp-shuffle-off" tabindex="1" title="shuffle off">shuffle off</a></li>
-                <li><a href="javascript:;" class="jp-repeat" tabindex="1" title="repeat">repeat</a></li>
-                <li><a href="javascript:;" class="jp-repeat-off" tabindex="1" title="repeat off">repeat off</a></li>
-            </ul>
-        </div>
-        <div class="jp-playlist">
-            <ul>
-                <li></li>
-            </ul>
-        </div>
-        <div class="jp-no-solution">
-            <span>Update Required</span>
-            To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
-        </div>
-    </div>
-  </div>
-`)
-	}
 
 	fmt.Fprintf(rsp, `
   <div class="list" style="overflow: auto">
