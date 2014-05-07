@@ -257,56 +257,47 @@ func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
 
 	rsp.Header().Add("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(rsp, `<!DOCTYPE html>
-
-<html>
-<head>
-  <title>%s</title>
-  <style type="text/css">
-a, a:active {text-decoration: none; color: blue;}
-a:visited {color: #48468F;}
-a:hover, a:focus {text-decoration: underline; color: red;}
-body {background-color: #F5F5F5;}
-h2 {margin-bottom: 12px;}
-table {margin-left: 12px;}
-th, td { font: 90%% monospace; text-align: left;}
-th { font-weight: bold; padding-right: 14px; padding-bottom: 3px;}
-td {padding-right: 14px;}
-td.n, th.n {white-space: nowrap;}
-td.m, th.m {white-space: nowrap;}
-td.s, th.s {white-space: nowrap; text-align: right;}
-div.list { background-color: white; border-top: 1px solid #646464; border-bottom: 1px solid #646464; padding-top: 10px; padding-bottom: 14px;}
-div.foot { font: 90%% monospace; color: #787878; padding-top: 4px;}
-  </style>
-</head>
-<body>
-`, pathHtml)
-
-	fmt.Fprintf(rsp, `
-  <h2>Index of %s</h2>`, pathHtml)
-
-	fmt.Fprintf(rsp, `
-  <div class="list" style="overflow: auto">
-    <table cellpadding="0" cellspacing="0" summary="Directory Listing">
-      <thead>
-        <tr>
-          <th class="n"><a href="%s?sort=%s">Name</a></th>
-          <th class="m"><a href="%s?sort=%s">Last Modified</a></th>
-          <th class="s"><a href="%s?sort=%s">Size</a></th>
-          <th class="t">Type</th>
-        </tr>
-      </thead>
-      <tbody>`, pathHtml, nameSort, pathHtml, dateSort, pathHtml, sizeSort)
+<html lang="en">
+  <head>
+    <title>%s</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style type="text/css">
+.modified { text-align: center; width: 17em; }
+.size { width: 6em; }
+th.size { text-align: center; }
+td.size { text-align: right; }
+.type { width: 15em; }
+th.type { text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <h2>Index of %s</h2>
+        <table class="table table-striped table-condensed table-bordered">
+          <thead>
+            <tr>
+              <th class="name"><a href="?sort=%s">Name</a></th>
+              <th class="size"><a href="?sort=%s">Size</a></th>
+              <th class="modified"><a href="?sort=%s">Last Modified</a></th>
+              <th class="type">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+`, pathHtml, pathHtml, nameSort, sizeSort, dateSort)
 
 	// Add the Parent Directory link if we're above the jail root:
 	if startsWith(baseDir, jailRoot) {
-		hrefParent := translateForProxy(baseDir) + "/"
 		fmt.Fprintf(rsp, `
         <tr>
-          <td class="n"><a href="%s">../</a></td>
-          <td class="m"></td>
-          <td class="s"></td>
-          <td class="t">Directory</td>
-        </tr>`, hrefParent)
+          <td class="name"><a href="../">../</a></td>
+          <td class="size"></td>
+          <td class="modified"></td>
+          <td class="type">Directory</td>
+        </tr>`)
 	}
 
 	for _, dfi := range fis {
@@ -328,37 +319,36 @@ div.foot { font: 90%% monospace; color: #787878; padding-top: 4px;}
 			href += "/"
 		} else {
 			size := dfi.Size()
-			if size < 1024 {
-				sizeText = fmt.Sprintf("%d  B", size)
-			} else if size < 1024*1024 {
-				sizeText = fmt.Sprintf("%.02f KB", float64(size)/1024.0)
+			if size < 1024*1024 {
+				sizeText = fmt.Sprintf("%.02f KiB", float64(size)/1024.0)
 			} else if size < 1024*1024*1024 {
-				sizeText = fmt.Sprintf("%.02f MB", float64(size)/(1024.0*1024.0))
+				sizeText = fmt.Sprintf("%.02f MiB", float64(size)/(1024.0*1024.0))
 			} else {
-				sizeText = fmt.Sprintf("%.02f GB", float64(size)/(1024.0*1024.0*1024.0))
+				sizeText = fmt.Sprintf("%.02f GiB", float64(size)/(1024.0*1024.0*1024.0))
 			}
 		}
 
 		fmt.Fprintf(rsp, `
-        <tr>
-          <td class="n"><a href="%s">%s</a></td>
-          <td class="m">%s</td>
-          <td class="s">%s</td>
-          <td class="t">%s</td>
-        </tr>`,
+            <tr>
+              <td class="name"><a href="%s">%s</a></td>
+              <td class="size">%s</td>
+              <td class="modified">%s</td>
+              <td class="type">%s</td>
+            </tr>`,
 			html.EscapeString(href),
 			html.EscapeString(name),
-			html.EscapeString(dfi.ModTime().Format("2006-01-02 15:04:05 -0700 MST")),
 			strings.Replace(html.EscapeString(sizeText), " ", "&nbsp;", -1),
+			html.EscapeString(dfi.ModTime().Format("2006-01-02 15:04:05 -0700 MST")),
 			html.EscapeString(mt),
 		)
 	}
 
 	fmt.Fprintf(rsp, `
-      </tbody>
-    </table>
-  </div>
-</body>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
 </html>`)
 
 	doOK(req, localPath, http.StatusOK)
