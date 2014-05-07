@@ -20,8 +20,6 @@ import (
 )
 
 var proxyRoot, jailRoot, accelRedirect string
-var jplayerUrl, jplayerPath string
-var useJPlayer bool
 
 func startsWith(s, start string) bool {
 	if len(s) < len(start) {
@@ -439,12 +437,7 @@ func processRequest(rsp http.ResponseWriter, req *http.Request) {
 		log.Fatal(err)
 	}
 
-	if (jplayerPath != "") && startsWith(u.Path, jplayerUrl) {
-		// URL is under the jPlayer path:
-		localPath := path.Join(jplayerPath, removeIfStartsWith(u.Path, jplayerUrl))
-		http.ServeFile(rsp, req, localPath)
-		return
-	} else if startsWith(u.Path, proxyRoot) {
+	if startsWith(u.Path, proxyRoot) {
 		// URL is under the proxy path:
 		processProxiedRequest(rsp, req, u)
 		return
@@ -461,13 +454,7 @@ func main() {
 	flag.StringVar(&proxyRoot, "p", "/", "root of web requests to process")
 	flag.StringVar(&jailRoot, "r", ".", "local filesystem path to bind to web request root path")
 	flag.StringVar(&accelRedirect, "xa", "", "Root of X-Accel-Redirect paths to use)")
-	flag.StringVar(&jplayerUrl, "jp-url", "", `Web path to jPlayer files (e.g. "/js")`)
-	flag.StringVar(&jplayerPath, "jp-path", "", `Local filesystem path to jPlayer files`)
 	flag.Parse()
-
-	if (jplayerUrl != "") {
-		useJPlayer = true
-	}
 
 	// Create the socket to listen on:
 	l, err := net.Listen(socketType, socketAddr)
