@@ -265,6 +265,8 @@ func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <style type="text/css">
+a { color: #003fff; }
+td, th { white-space: nowrap; }
 .modified { text-align: center; width: 17em; }
 .size { width: 6em; }
 th.size { text-align: center; }
@@ -276,6 +278,7 @@ th.type { text-align: center; }
   <body>
     <div class="container">
       <div class="row">
+      	<div class="col-xs-12">
         <h2>Index of %s</h2>
         <table class="table table-striped table-condensed table-bordered">
           <thead>
@@ -346,6 +349,7 @@ th.type { text-align: center; }
 	fmt.Fprintf(rsp, `
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   </body>
