@@ -263,9 +263,8 @@ func generateIndexHtml(rsp http.ResponseWriter, req *http.Request, u *url.URL) {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href=".static/bootstrap.min.css">
     <style type="text/css">
-a { color: #003fff; }
 td, th { white-space: nowrap; padding: 4px 5px !important; }
 .modified { text-align: center; width: 16em; }
 .size { width: 7em; }
